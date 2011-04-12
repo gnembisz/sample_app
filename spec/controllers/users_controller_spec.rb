@@ -53,10 +53,8 @@ describe UsersController do
         response.should have_selector("a", :href => "/users?page=2",
                                            :content => "Next")
       end
-
     end
   end
-
 
   describe "GET 'new'" do
     it "should be successful" do
@@ -68,6 +66,19 @@ describe UsersController do
       get 'new'
       response.should have_selector("title", :content => "Sign up")
     end
+
+    describe "for signed-in users" do
+
+      before(:each) do
+        @user = test_sign_in(Factory(:user))
+      end
+
+      it "should not show sign up page for signed in users" do
+        get :new
+        response.should redirect_to root_path 
+      end
+    end
+
   end
 
   describe "GET 'show'" do
@@ -100,6 +111,14 @@ describe UsersController do
       get :show, :id => @user
       response.should have_selector("h1>img", :class => "gravatar")
     end
+    
+    it "should show the user's microposts" do
+      mp1 = Factory(:micropost, :user => @user, :content => "Foo bar")
+      mp2 = Factory(:micropost, :user => @user, :content => "Baz quux")
+      get :show, :id => @user
+      response.should have_selector("span.content", :content => mp1.content)
+      response.should have_selector("span.content", :content => mp2.content)
+    end
 
   end
 
@@ -126,6 +145,18 @@ describe UsersController do
       it "should render the 'new' page" do
         post :create, :user => @attr
         response.should render_template('new')
+      end
+    
+      describe "for signed-in users" do
+
+        before(:each) do
+          @user = test_sign_in(Factory(:user))
+        end
+    # cos mi nie wychodzi
+    #    it "should not allow to create a user for signed in user" do
+    #      post :create, :user => @user.attributes
+    #      response.should redirect_to(root_path) 
+    #    end
       end
     end
 
